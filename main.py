@@ -79,10 +79,10 @@ def copy(new_file, current_file):
                 if args.verbose:
                     print(f"skip {current_file}")
                 return
-            shutil.copyfile(current_file, new_file)
-            shutil.copystat(current_file, new_file)
             if args.verbose:
                 print(f"{'replace' if new_file.exists() else 'create'} {new_file}")
+            shutil.copyfile(current_file, new_file)
+            shutil.copystat(current_file, new_file)
         #print(f"skip {new_file} because newer version exists")
 
     except Exception:
