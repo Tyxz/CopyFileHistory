@@ -25,6 +25,9 @@ parser.add_argument('-s', '--skip', action='store_true',
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='print progress')
 
+parser.add_argument('-e', '--exclude', nargs='+',
+                    help='name of folder or dir to exclude')
+
 args = parser.parse_args()
 
 
@@ -35,16 +38,21 @@ def search(current_path):
     
     try:
         for file_name in os.listdir(current_path):
+
             file_path = os.path.join(current_path, file_name)
             current_file = Path(file_path)
 
+            if file_name in args.exclude:
+                if args.verbose:
+                    print(f"exclude {current_file}")
+                continue
 
             new_path = re.sub(r' \(\d{4}_\d{2}_\d{2} \d{2}_\d{2}_\d{2} UTC\)', '', file_path)
 
-            destination_path = new_path.replace(source, destination) 
-            new_file = Path(destination_path) 
- 
-
+            destination_path = new_path.replace(source, destination)
+            new_file = Path(destination_path)  
+            
+            new_file.chmod(0o777)
             if current_file.is_dir():   
                 if not new_file.exists():
                     if args.verbose:
@@ -67,7 +75,8 @@ def copy(new_file, current_file):
             if args.skip and filecmp.cmp(current_file, new_file):
                 #print(f"skip {current_file}")
                 return
-            shutil.copy2(current_file, new_file)
+            shutil.copyfile(current_file, new_file)
+            shutil.copystat(current_file, new_file)
             if args.verbose:
                 print(f"{'replace' if new_file.exists() else 'create'} {new_file}")
         #print(f"skip {new_file} because newer version exists")
