@@ -1,0 +1,44 @@
+from pathlib import Path
+import glob
+import re
+import os
+import argparse
+import filecmp
+
+
+parser = argparse.ArgumentParser(description='Remove iso mark on files.')
+
+parser.add_argument('path',
+                    help='path to start looking')
+
+parser.add_argument('-r', '--recursive', action='store_true',
+                    help='recursive search [True]')
+
+args = parser.parse_args()
+
+def rename(current_path):
+    try:
+        for file_name in os.listdir(current_path):
+            file_path = os.path.join(current_path, file_name)
+            current_file = Path(file_path)
+
+            new_name = re.sub(r' \(\d{4}_\d{2}_\d{2} \d{2}_\d{2}_\d{2} UTC\)', '', file_name)
+            if new_name == file_name:
+                if os.path.isdir(file_path) and args.recursive:
+                    rename2(current_file)
+                continue  
+
+            new_path = os.path.join(current_path, new_name)          
+            new_file = Path(new_path)
+
+            if new_file.is_file() and filecmp.cmp(current_file, new_file) and new_file.stat().st_mtime >= current_file.stat().st_mtime:
+                print(new_file.is_file(), filecmp.cmp(current_file, new_file), new_file.stat().st_mtime >= current_file.stat().st_mtime)
+                current_file.unlink()
+                print(f"delete {current_file}")
+            else:
+                current_file.replace(new_file)
+                print(f"replace {new_file}")
+    except:
+        print(f"An exception occurred at {current_path}") 
+
+rename(args.path)
