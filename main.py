@@ -51,8 +51,10 @@ def search(current_path):
 
             destination_path = new_path.replace(source, destination)
             new_file = Path(destination_path)  
-            
-            new_file.chmod(0o777)
+
+            if new_file.exists():
+                new_file.chmod(0o777)
+
             if current_file.is_dir():   
                 if not new_file.exists():
                     if args.verbose:
@@ -64,16 +66,18 @@ def search(current_path):
             else: 
                 copy(new_file, current_file)
 
-    except Exception as e:
-        print(f"An exception occurred while creating\n{e}") 
+    except Exception:
+        tb = sys.exc_info()[2]
+        print(tb) 
 
 
 def copy(new_file, current_file):
     
     try:
         if not new_file.exists() or new_file.stat().st_mtime < current_file.stat().st_mtime:
-            if args.skip and filecmp.cmp(current_file, new_file):
-                #print(f"skip {current_file}")
+            if new_file.exists() and args.skip and filecmp.cmp(current_file, new_file):
+                if args.verbose:
+                    print(f"skip {current_file}")
                 return
             shutil.copyfile(current_file, new_file)
             shutil.copystat(current_file, new_file)
@@ -81,8 +85,9 @@ def copy(new_file, current_file):
                 print(f"{'replace' if new_file.exists() else 'create'} {new_file}")
         #print(f"skip {new_file} because newer version exists")
 
-    except Exception as e:
-        print(f"An exception occurred while copying\n{e}") 
+    except Exception:
+        tb = sys.exc_info()[2]
+        print(tb) 
 
 
 search(args.source)
